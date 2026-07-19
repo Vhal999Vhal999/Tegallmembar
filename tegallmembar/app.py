@@ -1,14 +1,20 @@
-"""Flask web app for digital clock with timezone support."""
+"""Updated Flask app with config integration."""
 
 from flask import Flask, render_template, jsonify
 from datetime import datetime
 import pytz
 import os
+from tegallmembar.config import get_config
 
+# Initialize Flask app
 app = Flask(__name__, template_folder='../templates')
 
-# Define time zones
-TIME_ZONES = {
+# Load configuration
+config = get_config()
+app.config.from_object(config)
+
+# Get timezones from config
+TIME_ZONES = app.config.get('TIMEZONES', {
     'UTC': 'UTC',
     'EST': 'America/New_York',
     'CST': 'America/Chicago',
@@ -19,7 +25,7 @@ TIME_ZONES = {
     'IST': 'Asia/Kolkata',
     'JST': 'Asia/Tokyo',
     'AEST': 'Australia/Sydney',
-}
+})
 
 @app.route('/')
 def index():
@@ -79,7 +85,21 @@ def get_timezones():
 @app.route('/health')
 def health():
     """Health check endpoint for Heroku."""
-    return jsonify({'status': 'ok', 'service': 'Tegallmembar Digital Clock'}), 200
+    return jsonify({
+        'status': 'ok',
+        'service': 'Tegallmembar Digital Clock',
+        'environment': os.environ.get('FLASK_ENV', 'development')
+    }), 200
+
+@app.route('/config')
+def get_app_config():
+    """Get app configuration info (non-sensitive)."""
+    return jsonify({
+        'app_name': app.config.get('SECRET_KEY', 'N/A')[:10],
+        'debug': app.config.get('DEBUG', False),
+        'environment': os.environ.get('FLASK_ENV', 'development'),
+        'timezones_count': len(TIME_ZONES)
+    })
 
 @app.errorhandler(404)
 def not_found(error):
@@ -92,6 +112,9 @@ def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    # Get port from environment variable or default to 5000
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    # Get port from environment variable or config
+    port = app.config.get('PORT', 5000)
+    host = app.config.get('HOST', '0.0.0.0')
+    debug = app.config.get('DEBUG', False)
+    
+    app.run(host=host, port=port, debug=debug)
