@@ -1,0 +1,17 @@
+{
+  "name": "Tegallmembar - Digital Clock",
+  "description": "A beautiful digital clock displaying time in multiple time zones",
+  "repository": "https://github.com/Vhal999Vhal999/Tegallmembar",
+  "keywords": ["python", "flask", "clock", "timezone", "heroku"],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  }
+}
